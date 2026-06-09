@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 14px;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-size: 13px;
+      }
+      h1 {
+        margin: 0 0 2px;
+        font-size: 14px;
+        color: #fff;
+      }
+      .sub {
+        margin: 0 0 12px;
+        font-size: 11px;
+        color: #64748b;
+      }
+      label {
+        display: block;
+        margin: 8px 0 3px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 7px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        font-size: 13px;
+        font-family: inherit;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid #6366f1;
+        outline-offset: -1px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row > div {
+        flex: 1;
+      }
+      button {
+        width: 100%;
+        margin-top: 12px;
+        padding: 9px;
+        border: none;
+        border-radius: 8px;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #6366f1;
+      }
+      details {
+        margin-top: 10px;
+      }
+      summary {
+        font-size: 11px;
+        color: #64748b;
+        cursor: pointer;
+      }
+      .hint {
+        margin-top: 8px;
+        font-size: 10px;
+        color: #475569;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Quick-Add</h1>
+    <p class="sub">Direkt in die SSP Workstation speichern</p>
+
+    <form id="form">
+      <label for="title">Titel *</label>
+      <input id="title" required placeholder="Was ist zu tun?" autofocus />
+
+      <div class="row">
+        <div>
+          <label for="type">Typ</label>
+          <select id="type">
+            <option value="task">● Aufgabe</option>
+            <option value="meeting">◆ Termin</option>
+          </select>
+        </div>
+        <div>
+          <label for="date">Datum</label>
+          <input id="date" type="date" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="time">Uhrzeit</label>
+          <input id="time" type="time" />
+        </div>
+        <div>
+          <label for="notes">Notiz</label>
+          <input id="notes" placeholder="optional" />
+        </div>
+      </div>
+
+      <button type="submit">In Workstation speichern</button>
+    </form>
+
+    <details>
+      <summary>Einstellungen</summary>
+      <label for="appUrl">App-Adresse</label>
+      <input id="appUrl" placeholder="http://localhost:5175" />
+    </details>
+
+    <p class="hint">Ohne Datum landet die Aufgabe im Eingang (Inbox).</p>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

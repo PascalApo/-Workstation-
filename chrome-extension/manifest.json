@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "SSP Workstation – Quick-Add",
+  "version": "1.0.0",
+  "description": "Aufgaben und Termine von jeder Webseite direkt in die SSP Workstation schicken.",
+  "permissions": ["contextMenus", "storage", "tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Quick-Add: Aufgabe oder Termin anlegen",
+    "default_icon": { "128": "icon-128.png" }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "128": "icon-128.png"
+  }
+}

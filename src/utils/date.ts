@@ -44,6 +44,32 @@ export function generateId(): string {
   return crypto.randomUUID()
 }
 
+export function addDaysISO(iso: string, days: number): string {
+  const d = new Date(iso + 'T12:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Nächstes Datum für eine wiederkehrende Aufgabe (immer in der Zukunft). */
+export function nextRecurrenceDate(
+  base: string,
+  recurrence: 'daily' | 'weekly' | 'monthly',
+): string {
+  const today = todayISO()
+  let next = base
+  const advance = (iso: string): string => {
+    if (recurrence === 'daily') return addDaysISO(iso, 1)
+    if (recurrence === 'weekly') return addDaysISO(iso, 7)
+    const d = new Date(iso + 'T12:00:00')
+    d.setMonth(d.getMonth() + 1)
+    return d.toISOString().slice(0, 10)
+  }
+  do {
+    next = advance(next)
+  } while (next <= today)
+  return next
+}
+
 export function startOfWeekISO(iso?: string): string {
   const d = iso ? new Date(iso + 'T12:00:00') : new Date()
   const day = d.getDay()

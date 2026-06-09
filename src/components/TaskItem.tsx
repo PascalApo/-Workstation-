@@ -1,4 +1,4 @@
-import { PRIORITY_LABELS } from '../constants/defaults'
+import { PRIORITY_LABELS, RECURRENCE_LABELS } from '../constants/defaults'
 import type { Task } from '../types'
 import { formatDateDE, isOverdue } from '../utils/date'
 import { setTaskDragData } from './dnd/taskDrag'
@@ -64,6 +64,14 @@ export function TaskItem({
           {task.isTop3 && task.top3Date && (
             <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs font-medium text-indigo-300 ring-1 ring-indigo-500/30">
               Top 3
+            </span>
+          )}
+          {task.recurrence && (
+            <span
+              className="rounded-full bg-sky-500/15 px-2 py-0.5 text-xs font-medium text-sky-300 ring-1 ring-sky-500/30"
+              title={`Wiederholt sich: ${RECURRENCE_LABELS[task.recurrence]}`}
+            >
+              ↻ {RECURRENCE_LABELS[task.recurrence]}
             </span>
           )}
         </div>

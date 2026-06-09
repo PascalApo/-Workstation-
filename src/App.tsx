@@ -3,8 +3,10 @@ import { Layout } from './components/Layout'
 import { AppProvider } from './context/AppContext'
 import { CalendarPage } from './pages/CalendarPage'
 import { FocusPage } from './pages/FocusPage'
+import { InsightsPage } from './pages/InsightsPage'
 import { IntegrationsPage } from './pages/IntegrationsPage'
 import { MeetingsPage } from './pages/MeetingsPage'
+import { NotesPage } from './pages/NotesPage'
 import { PlanPage } from './pages/PlanPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { QuickAddPage } from './pages/QuickAddPage'
@@ -27,6 +29,8 @@ export default function App() {
             <Route path="aufgaben" element={<TasksPage />} />
             <Route path="meetings" element={<MeetingsPage />} />
             <Route path="routine" element={<RoutinePage />} />
+            <Route path="notizen" element={<NotesPage />} />
+            <Route path="insights" element={<InsightsPage />} />
             <Route path="integrationen" element={<IntegrationsPage />} />
             <Route path="einstellungen" element={<SettingsPage />} />
             <Route path="quickadd" element={<QuickAddPage />} />

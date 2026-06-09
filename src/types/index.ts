@@ -7,6 +7,7 @@ export type EisenhowerQuadrant =
   | 'urgent_not_important'
   | 'not_urgent_not_important'
 export type FollowUpStatus = 'open' | 'done' | 'waiting'
+export type Recurrence = 'daily' | 'weekly' | 'monthly'
 export type RoutineType = 'daily_morning' | 'daily_evening' | 'weekly_review'
 export type PlanTab = 'kanban' | 'matrix' | 'week'
 
@@ -22,6 +23,7 @@ export interface Task {
   status: TaskStatus
   workflowStatus: WorkflowStatus
   quadrant?: EisenhowerQuadrant
+  recurrence?: Recurrence
   sourceMeetingId?: string
   isTop3?: boolean
   top3Date?: string
@@ -110,12 +112,35 @@ export interface RoutineTemplates {
   weekly_review: string[]
 }
 
+export type NoteColor = 'slate' | 'indigo' | 'emerald' | 'amber' | 'rose'
+
+export interface Note {
+  id: string
+  title: string
+  content: string
+  color: NoteColor
+  pinned: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FocusSession {
+  id: string
+  date: string
+  minutes: number
+  taskId?: string
+  taskTitle?: string
+  completedAt: string
+}
+
 export interface AppExport {
-  version: 2
+  version: 2 | 3
   exportedAt: string
   tasks: Task[]
   meetings: Meeting[]
   routines: RoutineCheck[]
   routineTemplates: RoutineTemplates
   weeklyGoals: WeeklyGoal[]
+  notes?: Note[]
+  focusSessions?: FocusSession[]
 }

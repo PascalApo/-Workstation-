@@ -9,9 +9,12 @@ import {
 } from 'react'
 import {
   deleteMeeting,
+  deleteNote,
   deleteTask,
   deleteWeeklyGoal,
+  getAllFocusSessions,
   getAllMeetings,
+  getAllNotes,
   getAllRoutines,
   getAllTasks,
   getAllWeeklyGoals,
@@ -19,7 +22,9 @@ import {
   getRoutineTemplates,
   importAllData,
   initDB,
+  saveFocusSession,
   saveMeeting,
+  saveNote,
   saveRoutine,
   saveTask,
   saveWeeklyGoal,
@@ -28,7 +33,10 @@ import type {
   ActionItem,
   AppExport,
   EisenhowerQuadrant,
+  FocusSession,
   Meeting,
+  Note,
+  NoteColor,
   RoutineCheck,
   RoutineTemplates,
   RoutineType,
@@ -36,7 +44,12 @@ import type {
   WeeklyGoal,
   WorkflowStatus,
 } from '../types'
-import { generateId, startOfWeekISO, todayISO } from '../utils/date'
+import {
+  generateId,
+  nextRecurrenceDate,
+  startOfWeekISO,
+  todayISO,
+} from '../utils/date'
 import { normalizeTask } from '../utils/tasks'
 
 type TaskInput = Omit<Task, 'id' | 'createdAt' | 'status' | 'workflowStatus'> & {
@@ -49,6 +62,8 @@ interface AppContextValue {
   meetings: Meeting[]
   routines: RoutineCheck[]
   weeklyGoals: WeeklyGoal[]
+  notes: Note[]
+  focusSessions: FocusSession[]
   routineTemplates: RoutineTemplates
   inboxCount: number
   refresh: () => Promise<void>
@@ -70,6 +85,10 @@ interface AppContextValue {
   removeMeeting: (id: string) => Promise<void>
   getRoutineForToday: (type: RoutineType) => Promise<RoutineCheck>
   updateRoutine: (routine: RoutineCheck) => Promise<void>
+  addNote: (input: { title: string; content: string; color?: NoteColor }) => Promise<Note>
+  updateNote: (note: Note) => Promise<void>
+  removeNote: (id: string) => Promise<void>
+  logFocusSession: (input: { minutes: number; taskId?: string; taskTitle?: string }) => Promise<void>
   exportData: () => AppExport
   importData: (data: AppExport) => Promise<void>
 }
@@ -82,6 +101,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [routines, setRoutines] = useState<RoutineCheck[]>([])
   const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([])
+  const [notes, setNotes] = useState<Note[]>([])
+  const [focusSessions, setFocusSessions] = useState<FocusSession[]>([])
   const [routineTemplates, setRoutineTemplates] = useState<RoutineTemplates>({
     daily_morning: [],
     daily_evening: [],
@@ -89,19 +110,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   })
 
   const refresh = useCallback(async () => {
-    const [loadedTasks, loadedMeetings, loadedRoutines, goals, templates] =
-      await Promise.all([
-        getAllTasks(),
-        getAllMeetings(),
-        getAllRoutines(),
-        getAllWeeklyGoals(),
-        getRoutineTemplates(),
-      ])
+    const [
+      loadedTasks,
+      loadedMeetings,
+      loadedRoutines,
+      goals,
+      templates,
+      loadedNotes,
+      loadedSessions,
+    ] = await Promise.all([
+      getAllTasks(),
+      getAllMeetings(),
+      getAllRoutines(),
+      getAllWeeklyGoals(),
+      getRoutineTemplates(),
+      getAllNotes(),
+      getAllFocusSessions(),
+    ])
     setTasks(loadedTasks)
     setMeetings(loadedMeetings)
     setRoutines(loadedRoutines)
     setWeeklyGoals(goals)
     setRoutineTemplates(templates)
+    setNotes(loadedNotes)
+    setFocusSessions(loadedSessions)
   }, [])
 
   useEffect(() => {
@@ -173,6 +205,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return done.length
   }, [tasks, refresh])
 
+  /** Beim Abschließen einer wiederkehrenden Aufgabe die nächste Instanz anlegen. */
+  const spawnNextOccurrence = useCallback(async (task: Task) => {
+    if (!task.recurrence) return
+    const base = task.dueDate ?? todayISO()
+    const nextDue = nextRecurrenceDate(base, task.recurrence)
+    const next: Task = normalizeTask({
+      ...task,
+      id: generateId(),
+      dueDate: nextDue,
+      status: 'open',
+      workflowStatus: 'open',
+      isTop3: false,
+      top3Date: undefined,
+      completedAt: undefined,
+      createdAt: new Date().toISOString(),
+    })
+    await saveTask(next)
+  }, [])
+
   const setWorkflow = useCallback(
     async (id: string, workflowStatus: WorkflowStatus) => {
       const task = tasks.find((t) => t.id === id)
@@ -184,9 +235,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: done ? 'done' : 'open',
         completedAt: done ? new Date().toISOString() : undefined,
       })
+      if (done && task.status !== 'done') await spawnNextOccurrence(task)
       await refresh()
     },
-    [tasks, refresh],
+    [tasks, refresh, spawnNextOccurrence],
   )
 
   const setQuadrant = useCallback(
@@ -226,9 +278,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         workflowStatus: done ? 'done' : 'open',
         completedAt: done ? new Date().toISOString() : undefined,
       })
+      if (done) await spawnNextOccurrence(task)
       await refresh()
     },
-    [tasks, refresh],
+    [tasks, refresh, spawnNextOccurrence],
   )
 
   const setTop3 = useCallback(
@@ -369,17 +422,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [refresh],
   )
 
+  const addNote = useCallback(
+    async (input: { title: string; content: string; color?: NoteColor }) => {
+      const now = new Date().toISOString()
+      const note: Note = {
+        id: generateId(),
+        title: input.title.trim(),
+        content: input.content,
+        color: input.color ?? 'slate',
+        pinned: false,
+        createdAt: now,
+        updatedAt: now,
+      }
+      await saveNote(note)
+      await refresh()
+      return note
+    },
+    [refresh],
+  )
+
+  const updateNote = useCallback(
+    async (note: Note) => {
+      await saveNote({ ...note, updatedAt: new Date().toISOString() })
+      await refresh()
+    },
+    [refresh],
+  )
+
+  const removeNote = useCallback(
+    async (id: string) => {
+      await deleteNote(id)
+      await refresh()
+    },
+    [refresh],
+  )
+
+  const logFocusSession = useCallback(
+    async (input: { minutes: number; taskId?: string; taskTitle?: string }) => {
+      const session: FocusSession = {
+        id: generateId(),
+        date: todayISO(),
+        minutes: input.minutes,
+        taskId: input.taskId,
+        taskTitle: input.taskTitle,
+        completedAt: new Date().toISOString(),
+      }
+      await saveFocusSession(session)
+      await refresh()
+    },
+    [refresh],
+  )
+
   const exportData = useCallback((): AppExport => {
     return {
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       tasks,
       meetings,
       routines,
       routineTemplates,
       weeklyGoals,
+      notes,
+      focusSessions,
     }
-  }, [tasks, meetings, routines, routineTemplates, weeklyGoals])
+  }, [tasks, meetings, routines, routineTemplates, weeklyGoals, notes, focusSessions])
 
   const importData = useCallback(
     async (data: AppExport) => {
@@ -389,6 +495,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         routines: data.routines,
         routineTemplates: data.routineTemplates,
         weeklyGoals: data.weeklyGoals ?? [],
+        notes: data.notes ?? [],
+        focusSessions: data.focusSessions ?? [],
       })
       await refresh()
     },
@@ -402,6 +510,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       meetings,
       routines,
       weeklyGoals,
+      notes,
+      focusSessions,
       routineTemplates,
       inboxCount,
       refresh,
@@ -423,6 +533,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeMeeting,
       getRoutineForToday,
       updateRoutine,
+      addNote,
+      updateNote,
+      removeNote,
+      logFocusSession,
       exportData,
       importData,
     }),
@@ -432,6 +546,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       meetings,
       routines,
       weeklyGoals,
+      notes,
+      focusSessions,
       routineTemplates,
       inboxCount,
       refresh,
@@ -453,6 +569,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removeMeeting,
       getRoutineForToday,
       updateRoutine,
+      addNote,
+      updateNote,
+      removeNote,
+      logFocusSession,
       exportData,
       importData,
     ],

@@ -49,6 +49,12 @@ export const FOLLOW_UP_LABELS = {
   waiting: 'Warten auf Antwort',
 } as const
 
+export const RECURRENCE_LABELS = {
+  daily: 'Täglich',
+  weekly: 'Wöchentlich',
+  monthly: 'Monatlich',
+} as const
+
 export const ROUTINE_LABELS = {
   daily_morning: 'Morgen-Routine',
   daily_evening: 'Abend-Routine',

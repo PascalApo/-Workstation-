@@ -4,8 +4,11 @@ import { DayAgenda } from '../components/calendar/DayAgenda'
 import { DayPlanner } from '../components/calendar/DayPlanner'
 import { DragGhost } from '../components/calendar/DragGhost'
 import { FlowCanvas } from '../components/calendar/FlowCanvas'
+import { IcsImportButton } from '../components/calendar/IcsImportButton'
+import { MobileCalendar } from '../components/calendar/MobileCalendar'
 import { MonthGrid } from '../components/calendar/MonthGrid'
 import { UnscheduledPanel } from '../components/calendar/UnscheduledPanel'
+import { useIsMobile } from '../hooks/useIsMobile'
 import {
   CalendarDragProvider,
   type DropTarget,
@@ -31,6 +34,7 @@ import {
 
 function CalendarContent() {
   const { loading, tasks, meetings, updateTask, updateMeeting } = useApp()
+  const isMobile = useIsMobile()
   const [view, setView] = useState<CalendarView>('flow')
   const [focusDate, setFocusDate] = useState(todayISO())
   const [selectedDate, setSelectedDate] = useState(todayISO())
@@ -129,6 +133,10 @@ function CalendarContent() {
 
   if (loading) {
     return <p className="text-slate-500">Lade Kalender...</p>
+  }
+
+  if (isMobile) {
+    return <MobileCalendar events={events} />
   }
 
   return (

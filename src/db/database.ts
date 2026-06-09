@@ -1,7 +1,9 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { DEFAULT_ROUTINE_TEMPLATES } from '../constants/defaults'
 import type {
+  FocusSession,
   Meeting,
+  Note,
   RoutineCheck,
   RoutineTemplates,
   RoutineType,
@@ -36,10 +38,20 @@ interface SSPDB extends DBSchema {
     key: string
     value: RoutineTemplates
   }
+  notes: {
+    key: string
+    value: Note
+    indexes: { 'by-updated': string }
+  }
+  focusSessions: {
+    key: string
+    value: FocusSession
+    indexes: { 'by-date': string }
+  }
 }
 
 const DB_NAME = 'ssp-alltag'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const TEMPLATES_KEY = 'routineTemplates'
 
 let dbPromise: Promise<IDBPDatabase<SSPDB>> | null = null
@@ -72,6 +84,18 @@ function getDB() {
               keyPath: 'id',
             })
             goalStore.createIndex('by-week', 'weekStart')
+          }
+        }
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('notes')) {
+            const noteStore = db.createObjectStore('notes', { keyPath: 'id' })
+            noteStore.createIndex('by-updated', 'updatedAt')
+          }
+          if (!db.objectStoreNames.contains('focusSessions')) {
+            const sessionStore = db.createObjectStore('focusSessions', {
+              keyPath: 'id',
+            })
+            sessionStore.createIndex('by-date', 'date')
           }
         }
       },
@@ -181,12 +205,39 @@ export async function getOrCreateRoutine(
   return routine
 }
 
+export async function getAllNotes(): Promise<Note[]> {
+  const db = await getDB()
+  return db.getAll('notes')
+}
+
+export async function saveNote(note: Note): Promise<void> {
+  const db = await getDB()
+  await db.put('notes', note)
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  const db = await getDB()
+  await db.delete('notes', id)
+}
+
+export async function getAllFocusSessions(): Promise<FocusSession[]> {
+  const db = await getDB()
+  return db.getAll('focusSessions')
+}
+
+export async function saveFocusSession(session: FocusSession): Promise<void> {
+  const db = await getDB()
+  await db.put('focusSessions', session)
+}
+
 export async function clearAllData(): Promise<void> {
   const db = await getDB()
   await db.clear('tasks')
   await db.clear('meetings')
   await db.clear('routines')
   await db.clear('weeklyGoals')
+  await db.clear('notes')
+  await db.clear('focusSessions')
   await db.put('settings', DEFAULT_ROUTINE_TEMPLATES, TEMPLATES_KEY)
 }
 
@@ -196,17 +247,24 @@ export async function importAllData(data: {
   routines: RoutineCheck[]
   routineTemplates: RoutineTemplates
   weeklyGoals?: WeeklyGoal[]
+  notes?: Note[]
+  focusSessions?: FocusSession[]
 }): Promise<void> {
   const db = await getDB()
   await db.clear('tasks')
   await db.clear('meetings')
   await db.clear('routines')
   await db.clear('weeklyGoals')
+  await db.clear('notes')
+  await db.clear('focusSessions')
 
   for (const task of data.tasks) await db.put('tasks', normalizeTask(task))
   for (const meeting of data.meetings) await db.put('meetings', meeting)
   for (const routine of data.routines) await db.put('routines', routine)
   for (const goal of data.weeklyGoals ?? [])
     await db.put('weeklyGoals', goal)
+  for (const note of data.notes ?? []) await db.put('notes', note)
+  for (const session of data.focusSessions ?? [])
+    await db.put('focusSessions', session)
   await db.put('settings', data.routineTemplates, TEMPLATES_KEY)
 }

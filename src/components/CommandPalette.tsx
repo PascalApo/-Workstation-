@@ -14,6 +14,8 @@ const actions = [
   { id: 'tasks', label: 'Aufgaben', path: '/aufgaben' },
   { id: 'meetings', label: 'Meetings', path: '/meetings' },
   { id: 'routine', label: 'Routine', path: '/routine' },
+  { id: 'notes', label: 'Notizen', path: '/notizen' },
+  { id: 'insights', label: 'Insights & Statistik', path: '/insights' },
   { id: 'export', label: 'Export & Tools', path: '/integrationen' },
 ]
 

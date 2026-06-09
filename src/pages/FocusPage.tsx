@@ -13,11 +13,20 @@ function formatTimer(seconds: number): string {
 }
 
 export function FocusPage() {
-  const { tasks, toggleTaskDone, setWorkflow } = useApp()
+  const { tasks, toggleTaskDone, setWorkflow, focusSessions, logFocusSession } =
+    useApp()
   const today = todayISO()
   const [seconds, setSeconds] = useState(POMODORO_WORK)
   const [running, setRunning] = useState(false)
   const [onBreak, setOnBreak] = useState(false)
+
+  const todayStats = useMemo(() => {
+    const sessions = focusSessions.filter((s) => s.date === today)
+    return {
+      count: sessions.length,
+      minutes: sessions.reduce((sum, s) => sum + s.minutes, 0),
+    }
+  }, [focusSessions, today])
 
   const focusTask = useMemo(() => {
     const top3 = tasks.find(
@@ -45,21 +54,29 @@ export function FocusPage() {
   useEffect(() => {
     if (!running) return
     const id = setInterval(() => {
-      setSeconds((s) => {
-        if (s <= 1) {
-          setRunning(false)
-          if (!onBreak) {
-            setOnBreak(true)
-            return POMODORO_BREAK
-          }
-          setOnBreak(false)
-          return POMODORO_WORK
-        }
-        return s - 1
-      })
+      setSeconds((s) => Math.max(0, s - 1))
     }, 1000)
     return () => clearInterval(id)
-  }, [running, onBreak])
+  }, [running])
+
+  // Timer abgelaufen: Session loggen und Phase wechseln
+  useEffect(() => {
+    if (seconds !== 0) return
+    setRunning(false)
+    if (!onBreak) {
+      void logFocusSession({
+        minutes: Math.round(POMODORO_WORK / 60),
+        taskId: focusTask?.id,
+        taskTitle: focusTask?.title,
+      })
+      setOnBreak(true)
+      setSeconds(POMODORO_BREAK)
+    } else {
+      setOnBreak(false)
+      setSeconds(POMODORO_WORK)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds])
 
   const resetTimer = () => {
     setRunning(false)
@@ -90,6 +107,12 @@ export function FocusPage() {
       <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-400">
         Fokus-Modus
       </p>
+      {todayStats.count > 0 && (
+        <p className="mt-2 text-xs text-slate-500">
+          Heute: {todayStats.count} Pomodoro{todayStats.count !== 1 ? 's' : ''} ·{' '}
+          {todayStats.minutes} Min. fokussiert
+        </p>
+      )}
 
       <div
         className={`mt-8 rounded-3xl border px-10 py-6 ${

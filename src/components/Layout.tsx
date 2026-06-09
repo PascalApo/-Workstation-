@@ -26,8 +26,13 @@ const navSections = [
     items: [
       { to: '/aufgaben', label: 'Aufgaben', icon: '☑' },
       { to: '/meetings', label: 'Meetings', icon: '◉' },
+      { to: '/notizen', label: 'Notizen', icon: '✎' },
       { to: '/routine', label: 'Routine', icon: '☰' },
     ],
+  },
+  {
+    label: 'Reflektieren',
+    items: [{ to: '/insights', label: 'Insights', icon: '◔' }],
   },
   {
     label: 'System',
@@ -43,7 +48,7 @@ const mobileNavItems = [
   { to: '/kalender', label: 'Kalender', icon: '◫' },
   { to: '/planen', label: 'Planen', icon: '◈' },
   { to: '/aufgaben', label: 'Aufgaben', icon: '☑' },
-  { to: '/meetings', label: 'Meetings', icon: '◉' },
+  { to: '/insights', label: 'Insights', icon: '◔' },
 ]
 
 export function Layout() {

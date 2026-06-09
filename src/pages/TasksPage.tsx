@@ -13,7 +13,8 @@ import {
   label,
 } from '../components/ui/classes'
 import { useApp } from '../context/AppContext'
-import type { Priority, Task } from '../types'
+import { RECURRENCE_LABELS } from '../constants/defaults'
+import type { Priority, Recurrence, Task } from '../types'
 import { isOverdue, isThisWeek, isToday, startOfWeekISO, todayISO } from '../utils/date'
 import { defaultMeetingEnd } from '../utils/calendarEvents'
 
@@ -37,6 +38,7 @@ export function TasksPage() {
   const [priority, setPriority] = useState<Priority>('medium')
   const [dueDate, setDueDate] = useState(todayISO())
   const [scheduledTime, setScheduledTime] = useState('')
+  const [recurrence, setRecurrence] = useState<Recurrence | ''>('')
 
   const filtered = tasks
     .filter((task) => {
@@ -89,6 +91,7 @@ export function TasksPage() {
       scheduledEndTime: scheduledTime
         ? defaultMeetingEnd(scheduledTime)
         : undefined,
+      recurrence: recurrence || undefined,
       workflowStatus: 'open',
     })
     setTitle('')
@@ -97,6 +100,7 @@ export function TasksPage() {
     setPriority('medium')
     setDueDate(todayISO())
     setScheduledTime('')
+    setRecurrence('')
     setShowForm(false)
   }
 
@@ -168,9 +172,26 @@ export function TasksPage() {
               className={`${input} sm:max-w-xs`}
             />
           </div>
-          <div>
-            <label className={label}>Priorität</label>
-            <TaskPrioritySelect value={priority} onChange={setPriority} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={label}>Priorität</label>
+              <TaskPrioritySelect value={priority} onChange={setPriority} />
+            </div>
+            <div>
+              <label className={label}>Wiederholung</label>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value as Recurrence | '')}
+                className={input}
+              >
+                <option value="">Keine</option>
+                {Object.entries(RECURRENCE_LABELS).map(([key, lbl]) => (
+                  <option key={key} value={key}>
+                    {lbl}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label className={label}>Beschreibung</label>

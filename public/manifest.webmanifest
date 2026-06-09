@@ -42,6 +42,11 @@
       "name": "Planungs-Hub",
       "url": "./planen",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Insights",
+      "url": "./insights",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

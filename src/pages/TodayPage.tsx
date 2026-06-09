@@ -17,12 +17,19 @@ import {
   isThisWeek,
   todayISO,
 } from '../utils/date'
+import {
+  activityByDay,
+  calcStreak,
+  productivityScore,
+} from '../utils/insights'
 
 export function TodayPage() {
   const {
     loading,
     tasks,
     meetings,
+    routines,
+    focusSessions,
     inboxCount,
     toggleTaskDone,
     getRoutineForToday,
@@ -56,6 +63,8 @@ export function TodayPage() {
   const weekCount = openTasks.filter(
     (t) => t.dueDate && isThisWeek(t.dueDate),
   ).length
+  const score = productivityScore(tasks, focusSessions, routines)
+  const streak = calcStreak(activityByDay(tasks, focusSessions, 60))
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -88,7 +97,29 @@ export function TodayPage() {
         Drag & Drop
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Link
+          to="/insights"
+          className="rounded-2xl border border-indigo-500/30 bg-indigo-500/10 p-4 transition-colors hover:border-indigo-400/50 sm:col-span-2"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-bold text-indigo-300">
+                {score.total}
+                <span className="text-sm font-normal text-slate-500"> / 100</span>
+              </p>
+              <p className="text-xs text-slate-500">Produktivitäts-Score</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-amber-300">
+                {streak > 0 ? streak : '–'}
+              </p>
+              <p className="text-xs text-slate-500">
+                Tage-Streak
+              </p>
+            </div>
+          </div>
+        </Link>
         {[
           { label: 'Eingang', value: inboxCount, color: 'text-amber-400', to: '/planen?tab=kanban' },
           { label: 'In Arbeit', value: inProgress.length, color: 'text-violet-400', to: '/planen' },

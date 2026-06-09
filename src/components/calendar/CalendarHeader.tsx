@@ -1,5 +1,6 @@
 import type { CalendarView } from '../../types'
 import { getViewTitle } from '../../utils/calendar'
+import { IcsImportButton } from './IcsImportButton'
 import {
   btnNav,
   btnTab,
@@ -71,17 +72,23 @@ export function CalendarHeader({
           </h2>
         </div>
 
-        <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
-          {views.map((v) => (
-            <button
-              key={v.key}
-              type="button"
-              onClick={() => onViewChange(v.key)}
-              className={view === v.key ? btnTabActive : btnTab}
-            >
-              {v.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <IcsImportButton
+            label="⤓ ICS importieren"
+            className={btnNav}
+          />
+          <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
+            {views.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => onViewChange(v.key)}
+                className={view === v.key ? btnTabActive : btnTab}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
